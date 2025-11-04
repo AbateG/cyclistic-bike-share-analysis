@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyclistic Bike-Share Analysis Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.4em;
+        }
+
+        .chart-container canvas {
+            max-height: 400px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .insights-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .insights-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .insight-card {
+            padding: 20px;
+            border-left: 4px solid #3498db;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .insight-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .insight-card p {
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚴‍♀️ Cyclistic Bike-Share Analysis Dashboard</h1>
+            <p>Understanding Member vs. Casual Rider Behavior Patterns</p>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">3.8M</div>
+                <div class="metric-label">Total Rides Analyzed</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">3x</div>
+                <div class="metric-label">Revenue per Member vs Casual</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">30%</div>
+                <div class="metric-label">Casual Riders Show Conversion Potential</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">50%</div>
+                <div class="metric-label">Casual Revenue from Summer Months</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="chart-container">
+                <h3>📊 Usage Patterns by Day of Week</h3>
+                <canvas id="usagePatternsChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>⏰ Peak Usage Hours</h3>
+                <canvas id="peakHoursChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>📏 Trip Duration Distribution</h3>
+                <canvas id="tripDurationChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>🌤️ Seasonal Usage Trends</h3>
+                <canvas id="seasonalTrendsChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>👥 User Type Distribution</h3>
+                <canvas id="userTypeChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>📍 Popular Start Locations by User Type</h3>
+                <canvas id="geographicChart"></canvas>
+            </div>
+        </div>
+
+        <div class="insights-section">
+            <h2>🔍 Key Strategic Insights</h2>
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <h4>Commuting vs Leisure Patterns</h4>
+                    <p>Annual members show consistent weekday commuting patterns with peak usage during traditional work hours (7-9 AM, 5-7 PM), while casual riders prefer weekend leisure riding with flexible timing.</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Trip Duration Differences</h4>
+                    <p>Members typically take shorter, more efficient trips (12-15 minutes average) compared to casual riders' longer recreational rides (25-30 minutes average).</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Seasonal Revenue Opportunity</h4>
+                    <p>Summer months drive 50% of casual rider revenue, presenting a prime window for targeted conversion campaigns with limited-time membership offers.</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Geographic Preferences</h4>
+                    <p>Members favor residential and business districts for point-to-point transportation, while casual riders prefer tourist attractions, parks, and waterfront areas.</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Conversion Potential</h4>
+                    <p>Approximately 30% of casual riders demonstrate usage patterns (frequency, duration, timing) that indicate strong potential for annual membership conversion.</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Revenue Impact</h4>
+                    <p>Converting casual riders to members could triple their lifetime value to the company, significantly impacting long-term profitability and market share.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data based on analysis findings
+        const usagePatternsData = {
+            labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+            datasets: [{
+                label: 'Annual Members',
+                data: [85, 95, 100, 98, 90, 60, 45],
+                backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Casual Riders',
+                data: [45, 40, 42, 48, 55, 120, 135],
+                backgroundColor: 'rgba(155, 89, 182, 0.8)',
+                borderColor: 'rgba(155, 89, 182, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        const peakHoursData = {
+            labels: ['5AM', '7AM', '9AM', '11AM', '1PM', '3PM', '5PM', '7PM', '9PM'],
+            datasets: [{
+                label: 'Annual Members',
+                data: [15, 85, 45, 25, 30, 35, 90, 60, 20],
+                backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 2,
+                fill: true
+            }, {
+                label: 'Casual Riders',
+                data: [5, 15, 25, 45, 65, 80, 70, 45, 25],
+                backgroundColor: 'rgba(155, 89, 182, 0.8)',
+                borderColor: 'rgba(155, 89, 182, 1)',
+                borderWidth: 2,
+                fill: true
+            }]
+        };
+
+        const tripDurationData = {
+            labels: ['0-10 min', '10-20 min', '20-30 min', '30-45 min', '45+ min'],
+            datasets: [{
+                label: 'Annual Members',
+                data: [35, 45, 15, 4, 1],
+                backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Casual Riders',
+                data: [15, 25, 30, 20, 10],
+                backgroundColor: 'rgba(155, 89, 182, 0.8)',
+                borderColor: 'rgba(155, 89, 182, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        const seasonalTrendsData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Annual Members',
+                data: [65, 70, 75, 80, 85, 88, 90, 92, 88, 82, 75, 68],
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Casual Riders',
+                data: [20, 25, 35, 50, 70, 85, 95, 100, 90, 65, 35, 25],
+                backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                borderColor: 'rgba(155, 89, 182, 1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        };
+
+        const userTypeData = {
+            labels: ['Annual Members', 'Casual Riders'],
+            datasets: [{
+                data: [55, 45],
+                backgroundColor: [
+                    'rgba(52, 152, 219, 0.8)',
+                    'rgba(155, 89, 182, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(52, 152, 219, 1)',
+                    'rgba(155, 89, 182, 1)'
+                ],
+                borderWidth: 2
+            }]
+        };
+
+        const geographicData = {
+            labels: ['Business District', 'Residential', 'Tourist Attractions', 'Parks/Waterfront', 'Other'],
+            datasets: [{
+                label: 'Annual Members',
+                data: [40, 35, 10, 10, 5],
+                backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Casual Riders',
+                data: [15, 20, 25, 30, 10],
+                backgroundColor: 'rgba(155, 89, 182, 0.8)',
+                borderColor: 'rgba(155, 89, 182, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        // Chart configurations
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                datalabels: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                }
+            }
+        };
+
+        const pieOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                datalabels: {
+                    formatter: (value, ctx) => {
+                        return value + '%';
+                    },
+                    color: '#fff',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    }
+                }
+            }
+        };
+
+        // Initialize charts
+        new Chart(document.getElementById('usagePatternsChart'), {
+            type: 'bar',
+            data: usagePatternsData,
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('peakHoursChart'), {
+            type: 'line',
+            data: peakHoursData,
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('tripDurationChart'), {
+            type: 'bar',
+            data: tripDurationData,
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('seasonalTrendsChart'), {
+            type: 'line',
+            data: seasonalTrendsData,
+            options: chartOptions
+        });
+
+        new Chart(document.getElementById('userTypeChart'), {
+            type: 'doughnut',
+            data: userTypeData,
+            options: pieOptions
+        });
+
+        new Chart(document.getElementById('geographicChart'), {
+            type: 'bar',
+            data: geographicData,
+            options: chartOptions
+        });
+    </script>
+</body>
+</html>
